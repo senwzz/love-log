@@ -1,4 +1,5 @@
-# love-log [![npm version](https://badge.fury.io/js/love-log.svg)](https://badge.fury.io/js/love-log)
+# love-log
+[![npm version](https://badge.fury.io/js/love-log.svg)](https://badge.fury.io/js/love-log)
 
 A logging library for node.js.
 
