@@ -42,5 +42,3 @@ Pull requests and stars are always welcome. For bugs and feature requests, [plea
 ## License
 Copyright (c) 2017 GE YONG
 Released under the MIT license
-
-***
