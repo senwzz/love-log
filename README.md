@@ -38,7 +38,3 @@ log.error(new Error('test'), 'error is about %s', 'test');
 
 ## Contributing
 Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](https://github.com/senwzz/love-log/issues)
-
-## License
-Copyright (c) 2017 GE YONG
-Released under the MIT license
