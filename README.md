@@ -81,7 +81,7 @@ var config =  {
                     return originalVal.stack.replace("<br />", "/n");
                 }
             },
-            // just display msg ...
+            // just display the msg ...
             {
                 name: "msg"
             }
