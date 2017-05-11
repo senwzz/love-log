@@ -47,7 +47,7 @@ var logger = require('love-log'),
 // 1. Create config
 // The following is the default
 var config =  {
-    levels: ["trace", "debug", "info", "warn", "error", "fatal", "done", "fail"],
+        levels: ["trace", "debug", "info", "warn", "error", "fatal", "done", "fail"],
         enFile: true, // enable save logs to file
         enConsole: true, // enable logs console
         // format is an arraylist to serialization the console message
