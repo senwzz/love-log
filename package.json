@@ -1,6 +1,6 @@
 {
   "name": "love-log",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Logging library for node.js",
   "dependencies": {
     "chalk": "^1.1.3",
