@@ -70,7 +70,8 @@ var config =  {
                 }
             },
             // log.error(new Error('test'));
-            // if message is an error object, it will add an 'err' item that include the error stack and it's 'msg' is the error's name and message
+            // if message is an error object, it will add an 'err' item that include the error's stack 
+            // and it's 'msg' is error's name and message
             {
                 name: "err",
                 before: function (strVal, originalVal) {
