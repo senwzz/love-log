@@ -4,9 +4,11 @@
 
 A logging library for node.js.
 
-- [x] - logs to console
-- [x] - logs to file
-- [x] - log file auto splitting
+- [x] - Logs to console
+- [x] - Logs to file
+- [x] - Log file auto splitting
+- [x] - Get log files to JSON
+- [x] - Delete log files
 
 ## Install
 
@@ -97,6 +99,30 @@ logger.config = config;
 var log = new logger(config);
 
 // ...
+```
+
+## Get
+```js
+var logger = require('love-log');
+// Get 'mylog' log files from 'd:/log/'
+// matches: regexp result of filename
+// log: each line of logs
+logger.get('d:/log/', 'mylog', function(matches, log){
+    // skip if it's not an error log
+    if(!('err' in log)){
+        return false;
+    }
+});
+```
+
+## Delete
+```js
+var logger = require('love-log');
+// Delete 'mylog' log files from 'd:/log/'
+// matches: regexp result of filename
+logger.del('d:/log/', 'mylog', function(matches){
+   ...
+});
 ```
 
 ## License
