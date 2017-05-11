@@ -2,6 +2,8 @@
 
 [![npm version](https://badge.fury.io/js/love-log.svg)](https://badge.fury.io/js/love-log)
 
+![logo](https://github.com/senwzz/love-log/blob/master/test.png?raw=true)
+
 A logging library for node.js.
 
 - [x] - Logs to console
