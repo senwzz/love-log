@@ -1,5 +1,4 @@
-# love-log 
-[![npm version](https://badge.fury.io/js/love-log.svg)](https://badge.fury.io/js/love-log)
+# love-log
 
 A logging library for node.js.
 
@@ -47,7 +46,7 @@ var config =  {
     levels: ["trace", "debug", "info", "warn", "error", "fatal", "done", "fail"],
         enFile: true, // enable save logs to file
         enConsole: true, // enable logs console
-        // format is an array list to serialization the console message
+        // format is an arraylist to serialization the console message
         // name: name of the log
         // align: display alignment
         // size: display width
@@ -99,4 +98,4 @@ var log = new logger(config);
 ```
 
 ## License
-MIT © GE YONG
+MIT &copy; GE YONG
