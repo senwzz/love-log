@@ -1,12 +1,11 @@
-# love-log
+# love-log 
 [![npm version](https://badge.fury.io/js/love-log.svg)](https://badge.fury.io/js/love-log)
 
 A logging library for node.js.
 
-- [x] - Stream to console
-- [x] - Stream to log file
-- [x] - Auto split log file
-
+- [x] - logs to console
+- [x] - logs to file
+- [x] - log file auto splitting
 
 ## Install
 
@@ -36,5 +35,67 @@ log.info({item: 'test'}, 'hello %s', 'world');
 log.error(new Error('test'), 'error is about %s', 'test');
 ```
 
-## Contributing
-Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](https://github.com/senwzz/love-log/issues)
+## Config
+```js
+var logger = require('love-log'),
+    process = require("process"),
+    chalk = require('chalk');
+
+// 1. Create config
+// The following is the default
+var config =  {
+    levels: ["trace", "debug", "info", "warn", "error", "fatal", "done", "fail"],
+        enFile: true, // enable save logs to file
+        enConsole: true, // enable logs console
+        // format is an array list to serialization the console message
+        // name: name of the log
+        // align: display alignment
+        // size: display width
+        // before: function befoe sizing
+        // after: function after sizing
+        format: [
+            {
+                name: "time",
+                before: function (strVal, originalVal) {
+                    return chalk.gray("| " + originalVal.toLocaleString() + " | ");
+                }
+            },
+            {
+                name: "level",
+                size: 6,
+                after: function (strVal, originalVal) {
+                    var color = colors[originalVal],
+                        out = strVal.toUpperCase();
+                    return (color ? color(out) : out) + " | ";
+                }
+            },
+            // log.error(new Error('test'));
+            // if message is an error object, it will add an 'err' item that include the error stack and it's 'msg' is the error's name and message
+            {
+                name: "err",
+                before: function (strVal, originalVal) {
+                    return originalVal.stack.replace("<br />", "/n");
+                }
+            },
+            // just display msg ...
+            {
+                name: "msg"
+            }
+        ],
+        // Directory of log files
+        dir: path.resolve(process.cwd(), "log"),
+        // max file size of log file, if greater than this value, logs will save to a new file
+        maxSize: 30 // 30MB
+};
+
+// 2. Use config
+logger.config = config;
+
+// OR
+var log = new logger(config);
+
+// ...
+```
+
+## License
+MIT © GE YONG
