@@ -4,7 +4,7 @@
 
 ![logo](https://github.com/senwzz/love-log/blob/master/test.png?raw=true)
 
-A logging library for node.js.
+:yum: A logging library for node.js.
 
 - [x] - Logs to console
 - [x] - Logs to file
@@ -128,4 +128,4 @@ logger.del('d:/log/', 'mylog', function(matches){
 ```
 
 ## License
-MIT &copy; GE YONG
+MIT &copy; GE YONG :innocent:
