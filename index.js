@@ -1,7 +1,8 @@
-﻿/*!
- * NODE-GLOGS
- * Copyright(c) 2017 Lonvenode,Inc.
-*/
+//
+// love-log
+// MIT (c) GE YONG
+// 2017
+//
 
 "use strict";
 
@@ -29,22 +30,22 @@ var process = require("process"),
         format: [
             {
                 name: "time",
-                before: function (val, originalVal) {
+                before: function (strVal, originalVal) {
                     return chalk.gray("| " + originalVal.toLocaleString() + " | ");
                 }
             },
             {
                 name: "level",
                 size: 6,
-                after: function (val, originalVal) {
+                after: function (strVal, originalVal) {
                     var color = colors[originalVal],
-                        out = val.toUpperCase();
+                        out = strVal.toUpperCase();
                     return (color ? color(out) : out) + " | ";
                 }
             },
             {
                 name: "err",
-                before: function (val, originalVal) {
+                before: function (strVal, originalVal) {
                     return originalVal.stack.replace("<br />", "/n");
                 }
             },
@@ -52,16 +53,16 @@ var process = require("process"),
                 name: "msg"
             }
         ],
-        dir: path.resolve(require("process").cwd(), "log"),
+        dir: path.resolve(process.cwd(), "log"),
         maxSize: 30
     };
 
-function formatVal(val, options) {
-    if (options) {
-        var size = options.size || 0,
-            align = options.align,
-            before = options.before,
-            after = options.after,
+function formatVal(val, config) {
+    if (config) {
+        var size = config.size || 0,
+            align = config.align,
+            before = config.before,
+            after = config.after,
             originalVal = val;
         val = val.toString();
         if ($.isFunction(before)) {
