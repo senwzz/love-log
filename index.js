@@ -66,12 +66,13 @@ var process = require("process"),
         maxSize: 30
     };
 
-function formatVal(val, config) {
-    if (config) {
-        var size = config.size || 0,
-            align = config.align,
-            before = config.before,
-            after = config.after,
+// formater
+function formater(val, options) {
+    if (options) {
+        var size = options.size || 0,
+            align = options.align,
+            before = options.before,
+            after = options.after,
             originalVal = val;
         val = val.toString();
         if ($.isFunction(before)) {
@@ -97,6 +98,45 @@ function formatVal(val, config) {
     return val.replace(br, "\n");
 }
 
+// Get log files
+function get(dir, name, options = {}) {
+    var out = {};
+    if (fs.existsSync(dir)) {
+        fs.readdirSync(dir).forEach(fd => {
+            var m = /^(.*)\-(\d+)(\..+)$/.exec(fd);
+            if (m && (m[3] === ext && (!name || m[1] === name))) {
+                fs.readFileSync(path.resolve(dir, fd), "utf8").split("\r\n").forEach(log => {
+                    if (log.trim() !== "") {
+                        var filter = options.filter;
+                        if ("br" in options && !options.br) { // Disabled HTML BR
+                            log.replace(new RegExp(br,"ig"), "\n");
+                        }
+                        if (!$.isFunction(filter) || filter.call(dir, m, log, log = JSON.parse(log)) !== false) {
+                            if (!(m[1] in out)) {
+                                out[m[1]] = [];
+                            }
+                            out[m[1]].push(log);
+                        }
+                    }
+                });
+            }
+        });
+    }
+    return out;
+}
+
+// Delete log files
+function del(dir, name, filter) {
+    fs.readdirSync(dir).forEach(fd => {
+        var m = /^(.*)\-(\d+)(\..+)$/.exec(fd);
+        if (m && (m[3] === ext && (!name || m[1] === name))) {
+            if (!$.isFunction(filter) || filter.call(dir, m) !== false) {
+                fs.unlink(path.resolve(dir, fd), err => { });
+            }
+        }
+    });
+}
+
 function logger(tag = "log", config = {}) {
     config = Object.assign(logger.config, config);
     var self = this,
@@ -107,7 +147,7 @@ function logger(tag = "log", config = {}) {
         size = 0,
         hasFile;
     if (fs.existsSync(dir)) {
-        // Get max log file id
+        // Get max log file ID
         fs.readdirSync(dir).forEach(fd => {
             var m = /^(.*)\-(\d+)(\..+)$/.exec(fd);
             if (m && m[3] === ext && m[1] === tag && isFinite(m[2])) {
@@ -120,7 +160,6 @@ function logger(tag = "log", config = {}) {
     } else {
         fs.mkdirSync(dir);
     }
-    // Get log file path
     filePath = path.resolve(dir, tag + "-" + fid + ext);
     if (hasFile) {
         size = fs.statSync(filePath).size;
@@ -171,7 +210,7 @@ function logger(tag = "log", config = {}) {
                     config.format.every(function (f) {
                         var t = f.key;
                         if (t in j) {
-                            str += formatVal(j[t], f);
+                            str += formater(j[t], f);
                             return !!!f.break;
                         }
                         return true;
@@ -205,47 +244,12 @@ function logger(tag = "log", config = {}) {
     });
 }
 
-// get logs
-logger.get = function (dir, name, filter) {
-    var out = {};
-    if (fs.existsSync(dir)) {
-        fs.readdirSync(dir).forEach(fd => {
-            var m = /^(.*)\-(\d+)(\..+)$/.exec(fd);
-            if (m && (m[3] === ext && (!name || m[1] === name))) {
-                try {
-                    fs.readFileSync(path.resolve(dir, fd), "utf8").split("\r\n").forEach(log => {
-                        if (log.trim() !== "") {
-                            log = JSON.parse(log);
-                            if (!$.isFunction(filter) || filter.call(dir, m, log, out) !== false) {
-                                if (!(m[1] in out)) {
-                                    out[m[1]] = [];
-                                }
-                                out[m[1]].push(log);
-                            }
-                        }
-                    });
-                } catch (ex) {
-                    // console.log(ex);
-                }
-            }
-        });
-    }
-    return out;
-};
+util.inherits(logger, require("events").EventEmitter); // EventEmitter
 
-// delete log files
-logger.del = function (dir, name, filter) {
-    fs.readdirSync(dir).forEach(fd => {
-        var m = /^(.*)\-(\d+)(\..+)$/.exec(fd);
-        if (m && (m[3] === ext && (!name || m[1] === name))) {
-            if (!$.isFunction(filter) || filter.call(dir, m) !== false) {
-                fs.unlink(path.resolve(dir, fd), err => { });
-            }
-        }
-    });
-};
+logger.get = get; // logger.get
+
+logger.del = del; // logger.del
 
 logger.config = defaultConfig;
 
-util.inherits(logger, require("events").EventEmitter); // EventEmitter
 module.exports = logger;
