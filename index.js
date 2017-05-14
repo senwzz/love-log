@@ -7,11 +7,13 @@
 "use strict";
 
 var process = require("process"),
+    stream = require("stream"),
     fs = require("fs"),
     path = require("path"),
     util = require("util"),
     chalk = require("chalk"),
     $ = require("love-gjs"),
+    br = "<br />",
     colors = {
         "trace": chalk.white,
         "debug": chalk.yellow,
@@ -29,13 +31,13 @@ var process = require("process"),
         enConsole: true,
         format: [
             {
-                name: "time",
+                key: "time",
                 before: function (strVal, originalVal) {
                     return chalk.gray("| " + originalVal.toLocaleString() + " | ");
                 }
             },
             {
-                name: "level",
+                key: "level",
                 size: 6,
                 after: function (strVal, originalVal) {
                     var color = colors[originalVal],
@@ -44,13 +46,20 @@ var process = require("process"),
                 }
             },
             {
-                name: "err",
+                key: "err",
+                break: true, // if is err, stop show msg
                 before: function (strVal, originalVal) {
-                    return originalVal.stack.replace("<br />", "/n");
+                    return originalVal.stack;
                 }
             },
             {
-                name: "msg"
+                key: "name",
+                after: function (strVal, originalVal) {
+                    return chalk.cyan(strVal + ": ");
+                }
+            },
+            {
+                key: "msg"
             }
         ],
         dir: path.resolve(process.cwd(), "log"),
@@ -85,86 +94,113 @@ function formatVal(val, config) {
             val = after(val, originalVal) || val;
         }
     }
-    return val;
+    return val.replace(br, "\n");
 }
 
-function logger(name = "log", config = {}) {
+function logger(tag = "log", config = {}) {
     config = Object.assign(logger.config, config);
     var self = this,
-        items = config.items,
-        enFile = config.enFile,
         dir = config.dir,
         maxSize = config.maxSize,
-        enConsole = config.enConsole,
-        levels = config.levels,
-        format = config.format;
-
-    if (enFile) {
-        var filePath,
-            fid = 0,
-            size = 0,
-            hasFile;
+        filePath,
+        fid = 0,
+        size = 0,
+        hasFile;
+    if (fs.existsSync(dir)) {
         // Get max log file id
         fs.readdirSync(dir).forEach(fd => {
             var m = /^(.*)\-(\d+)(\..+)$/.exec(fd);
-            if (m && m[3] === ext && m[1] === name && isFinite(m[2])) {
+            if (m && m[3] === ext && m[1] === tag && isFinite(m[2])) {
                 if (m[2] > fid) {
                     fid = m[2];
                 }
                 hasFile = 1;
             }
         });
-        // Get log file path
-        filePath = path.resolve(dir, name + "-" + fid + ext);
-        if (hasFile) {
-            size = fs.statSync(filePath).size;
-        }
+    } else {
+        fs.mkdirSync(dir);
+    }
+    // Get log file path
+    filePath = path.resolve(dir, tag + "-" + fid + ext);
+    if (hasFile) {
+        size = fs.statSync(filePath).size;
     }
     // Level methods
-    levels.forEach(level => {
-        self[level] = function () {
-            var j = {
-                name: name,
-                time: new Date(),
-                level: level
-            },
-                a0 = arguments[0];
-            if (a0 instanceof Error) {
-                var err = JSON.parse(JSON.stringify(a0, Object.getOwnPropertyNames(a0)));
-                Object.assign(j, {
-                    err: err,
-                    msg: err.message
-                });
-            } else if ($.isPlainObject(a0)) {
-                Object.assign(j, a0);
-                j.msg = util.format.apply(util, Array.prototype.slice.call(arguments, 1));
-            } else {
-                j.msg = util.format.apply(util, Array.prototype.slice.call(arguments));
-            }
-            j = Object.assign({}, items, j);
-            if (enConsole) {
-                var str = "";
-                format.forEach(function (f) {
-                    var t = f.name;
-                    if (t in j) {
-                        str += formatVal(j[t], f);
+    config.levels.forEach(level => {
+        self[level] = function (a0, a1) {
+            if (a0) {
+                var j = {
+                    time: new Date(),
+                    level: level
+                },
+                    enFile = config.enFile,
+                    enConsole = config.enConsole,
+                    enSync;
+
+                Object.assign(j, config.items); // config.items
+
+                if ($.isPlainObject(a1)) {
+                    Object.assign(j, a1.items);
+                    if ("name" in a1) {
+                        j.name = a1.name;
                     }
-                });
-                console.log(str);
-                self.emit("console", j);
-            }
-            if (enFile) {
-                var str_j = JSON.stringify(j).replace(/\\n\s+/g, "<br />") + "\r\n"; // text => html
-                size += Buffer.byteLength(str_j);
-                if (size >= maxSize * 1024 * 1024) {
-                    fid++;
-                    size = 0;
-                    filePath = path.resolve(dir, name + "-" + fid + ext); // New Log file path
+                    if ("enFile" in a1) {
+                        enFile = a1.enFile;
+                    }
+                    if ("enConsole" in a1) {
+                        enConsole = a1.enConsole;
+                    }
+                    if ("enSync" in a1) {
+                        enSync = a1.enSync;
+                    }
                 }
-                fs.appendFileSync(filePath, str_j);
-                self.emit("write", j);
+
+                if ($.isError(a0)) {
+                    j.err = {};
+                    Object.getOwnPropertyNames(a0).forEach((k) => {
+                        j.err[k] = a0[k];
+                    });
+                } else if ($.isArray(a0)) {
+                    j.msg = util.format.apply(util, a0);
+                } else {
+                    j.msg = a0.toString();
+                }
+
+                if (enConsole) {
+                    var str = "";
+                    config.format.every(function (f) {
+                        var t = f.key;
+                        if (t in j) {
+                            str += formatVal(j[t], f);
+                            return !!!f.break;
+                        }
+                        return true;
+                    });
+                    console.log(str);
+                    self.emit("console", j);
+                }
+                if (enFile) {
+                    var str_j = JSON.stringify(j, function (k, v) {
+                        if ($.isString(v)) {
+                            return v.replace(/(?:[\r\n]+)+\s*/g, br); // replace /r /n => <br />
+                        }
+                        return v;
+                    }) + "\r\n"; // text => html
+                    size += Buffer.byteLength(str_j);
+                    if (size >= maxSize * 1024 * 1024) {
+                        fid++;
+                        size = 0;
+                        filePath = path.resolve(dir, name + "-" + fid + ext); // New log file path
+                    }
+                    if (enSync) {
+                        fs.appendFileSync(filePath, str_j);
+                    } else {
+                        fs.appendFile(filePath, str_j, err => { });
+                    }
+                    self.emit("file", j);
+                }
+                self.emit("log", j);
             }
-            self.emit("log", j);
         }
     });
 }
