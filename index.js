@@ -109,7 +109,7 @@ function get(dir, name, options = {}) {
                     if (log.trim() !== "") {
                         var filter = options.filter;
                         if ("br" in options && !options.br) { // Disabled HTML BR
-                            log.replace(new RegExp(br,"ig"), "\n");
+                            log.replace(new RegExp(br, "ig"), "\n");
                         }
                         if (!$.isFunction(filter) || filter.call(dir, m, log, log = JSON.parse(log)) !== false) {
                             if (!(m[1] in out)) {
@@ -138,7 +138,7 @@ function del(dir, name, filter) {
 }
 
 function logger(tag = "log", config = {}) {
-    config = Object.assign(logger.config, config);
+    config = Object.assign({}, logger.config, config);
     var self = this,
         dir = config.dir,
         maxSize = config.maxSize,
@@ -201,6 +201,8 @@ function logger(tag = "log", config = {}) {
                     });
                 } else if ($.isArray(a0)) {
                     j.msg = util.format.apply(util, a0);
+                } else if ($.isPlainObject(a0)) {
+                    j.msg = JSON.stringify(a0);
                 } else {
                     j.msg = a0.toString();
                 }
